@@ -156,7 +156,20 @@ for(const e of enemies.slice()){
    v*=.73;if(d<125){ux=-ux;uy=-uy}
  }
  e.x+=ux*v*dt;e.y+=uy*v*dt;
- if(distance(e,p)<24){if(ramTime>0){kill(e);continue}if(inv<=0){damage();if(mode!=='play')return}e.x-=ux*35;e.y-=uy*35}
+ if(distance(e,p)<24){
+  if(ramTime>0){kill(e);continue}
+  // Enemy FPV detonates on impact and disappears even during invulnerability.
+  enemies.splice(enemies.indexOf(e),1);
+  spark(e.x,e.y,'#ff735f',32,180);
+  if(inv>0)continue;
+  if(shieldTime>0){shieldTime=0;inv=.7;spark(p.x,p.y,'#81dfff',24);continue}
+  // A direct enemy collision drains 50 percentage points of battery.
+  // A depleted battery still follows the existing battery-loss life rule.
+  batteryUse(50);
+  inv=1.4;flash=.45;spark(p.x,p.y,'#ffca79',22,140);
+  if(mode!=='play')return;
+  continue;
+ }
  if(distance(e,p)>Math.max(1250,width*1.6))enemies.splice(enemies.indexOf(e),1)
 }
 for(const item of pickups.slice()){item.life-=dt;if(distance(item,p)<24){pickups.splice(pickups.indexOf(item),1);if(item.type==='battery'){p.bat=100;score+=40}else if(item.type==='emp'){empCharge=Math.min(levels.emp>=10?200:100,empCharge+60);score+=40}else if(item.type==='ram'){ramCooldown=Math.max(0,ramCooldown-5);if(ramCooldown===0)ramStock=Math.min(levels.ram>=10?2:1,ramStock+1);score+=40}else if(item.type==='heart'){lives=Math.min(5,lives+1);score+=180}else if(item.type==='shield'){shieldTime=Math.max(shieldTime,9);score+=60}else if(item.type==='speed'){speedTime=Math.max(speedTime,7);score+=60}spark(item.x,item.y,'#bef779',15,110)}else if(item.life<=0||distance(item,p)>1000)pickups.splice(pickups.indexOf(item),1)}
